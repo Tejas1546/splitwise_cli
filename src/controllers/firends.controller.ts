@@ -1,5 +1,5 @@
 import type { iFriend } from "../models/friend.model.js";
-import { FriendRepository } from "../repositories/friends.repository.js";
+import { FriendRepository } from "../repositories/friends.repositories.js";
 
 export class FriendsController {
   checkEmailExists(email: string) {

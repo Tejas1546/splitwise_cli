@@ -1,4 +1,4 @@
-import type { PageOptions } from "../core/page-option.js";
+import type { PageOptions } from "../core/page-options.js";
 import type { iFriend } from "../models/friend.model.js";
 
 export class FriendRepository {

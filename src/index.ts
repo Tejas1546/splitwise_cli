@@ -1,4 +1,4 @@
-import { openInteractionManager } from "./src/presentation/interaction-manager.js";
+import { openInteractionManager } from "./presentation/interaction-manager.js";
 
 const run = async () => {
   const { close, choose, ask } = openInteractionManager();
