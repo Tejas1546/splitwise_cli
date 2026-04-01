@@ -12,7 +12,30 @@ export class FriendsController {
     if (!FriendRepository.getInstance()) {
       return { success: false };
     }
-    console.log("Adding friend to database...", friend);
     FriendRepository.getInstance().addFriend(friend);
+    return { success: true };
+  }
+
+  searchFriends(query: string) {
+    const friendRepository = FriendRepository.getInstance();
+    if (!friendRepository) {
+      return { success: false, data: [], matched: 0, total: 0 };
+    }
+    return { success: true, ...friendRepository.searchFriends(query) };
+  }
+
+  removeFriend(name: string) {
+    const friendRepository = FriendRepository.getInstance();
+    if (!friendRepository) {
+      return { success: false };
+    }
+    
+    const result = friendRepository.removeFriend(name);
+    if (typeof result === "object") {
+      console.log(result.error);
+      return { success: false, error: result.error };
+    }
+    
+    return { success: true };
   }
 }

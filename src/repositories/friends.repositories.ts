@@ -1,4 +1,4 @@
-import type { PageOptions } from "../core/page-options.js";
+import type { PageOptions, PageResult } from "../core/page-options.js";
 import type { iFriend } from "../models/friend.model.js";
 
 export class FriendRepository {
@@ -18,25 +18,44 @@ export class FriendRepository {
   }
 
   findFriendByEmail(email: string) {
-    return this.friends.find((friend) => friend.email === email);
+    return this.friends.find((friend) => !friend.isDeleted && friend.email === email);
   }
 
   findFriendByPhone(phone: string) {
-    return this.friends.find((friend) => friend.phone === phone);
+    return this.friends.find((friend) => !friend.isDeleted && friend.phone === phone);
   }
 
-  searchFriends(query: string, pageOption?: PageOptions) {
-    const lowerQuery = query.toLowerCase();
-    const filtered = this.friends.filter((friend) => {
-      friend.name.toLowerCase().includes(lowerQuery) ||
-        friend.email.toLowerCase().includes(lowerQuery) ||
-        friend.phone.toLowerCase().includes(lowerQuery);
-    });
+  removeFriend(name: string): boolean | { error: string } {
+    const friendIndex = this.friends.findIndex((f) => f.name.toLowerCase() === name.toLowerCase());
+    if (friendIndex === -1) {
+      return { error: "Friend not found" };
+    }
 
+    const friend = this.friends[friendIndex]!;
+    
+    if (Math.abs(friend.balance) > 0) {
+      friend.isDeleted = true;
+      console.log(`Soft deleted friend ${friend.name} due to pending payments: ${friend.balance}`);
+    } else {
+      this.friends.splice(friendIndex, 1);
+      console.log(`Hard deleted friend ${friend.name} as balance is 0`);
+    }
+    return true;
+  }
+
+  searchFriends(query: string, pageOptions?: PageOptions): PageResult<iFriend> {
+    const lowerQuery = query.toLowerCase();
+    const filtered = this.friends.filter(
+      (friend) =>
+        !friend.isDeleted &&
+        (friend.name.toLowerCase().includes(lowerQuery) ||
+          friend.email?.toLowerCase().includes(lowerQuery) ||
+          friend.phone?.toLowerCase().includes(lowerQuery)),
+    );
     return {
       data: filtered.slice(
-        pageOption?.offset || 0,
-        (pageOption?.offset || 0) + (pageOption?.limit || 5),
+        pageOptions?.offset || 0,
+        (pageOptions?.offset || 0) + (pageOptions?.limit || 5),
       ),
       matched: filtered.length,
       total: this.friends.length,

@@ -1,5 +1,5 @@
-const readline = require("node:readline");
-const { stdin: input, stdout: output } = require("node:process");
+import * as readline from "node:readline";
+import { stdin as input, stdout as output } from "node:process";
 
 export interface AskOptions {
   defaultAnswer?: string | undefined;
@@ -68,31 +68,3 @@ export const openInteractionManager = () => {
   };
 };
 
-// const run = async () => {
-//   console.log(
-//     "---------------WELCOME TO SPLIT EXPENSE DASHBOARD------------------",
-//   );
-//   while (true) {
-//     const prompt =
-//       "\n Options:\n\t1. Add New friend\n\t2. Show my friends\n\t3. Exit\nYour choice: ";
-//     const choice = await ask(prompt, {
-//       defaultAnswer: undefined,
-//       validator: undefined,
-//     });
-
-//     switch (choice) {
-//       case "1":
-//         // await AddFriend();
-//         break;
-//       case "2":
-//         // showFriends();
-//         break;
-//       case "3":
-//         console.log("Thank you, Goodbye!");
-//         rl.close();
-//         return;
-//     }
-//   }
-// };
-
-// run();
