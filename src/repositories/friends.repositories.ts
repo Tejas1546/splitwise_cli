@@ -1,9 +1,12 @@
 import type { PageOptions, PageResult } from "../core/page-options.js";
 import type { iFriend } from "../models/friend.model.js";
 
+import { AppDBManager } from "../models/db-manager.js";
+
 export class FriendRepository {
   private static instance: FriendRepository;
   private friends: iFriend[] = [];
+
   static getInstance() {
     if (!FriendRepository.instance) {
       FriendRepository.instance = new FriendRepository();
@@ -11,35 +14,62 @@ export class FriendRepository {
     return FriendRepository.instance;
   }
 
-  private constructor() {}
+  private constructor() {
+    this.friends = AppDBManager.getInstance()
+      .getDB()
+      .table("friends") as iFriend[];
+  }
+
+  get getAllFriends() {
+    return this.friends.filter((f) => !f.isDeleted);
+  }
+
   addFriend(friend: iFriend) {
     this.friends.push(friend);
-    console.log("Friend added to repository:", friend);
+    AppDBManager.getInstance().save();
   }
 
   findFriendByEmail(email: string) {
-    return this.friends.find((friend) => !friend.isDeleted && friend.email === email);
+    return this.friends.find(
+      (friend) => !friend.isDeleted && friend.email === email,
+    );
   }
 
   findFriendByPhone(phone: string) {
-    return this.friends.find((friend) => !friend.isDeleted && friend.phone === phone);
+    return this.friends.find(
+      (friend) => !friend.isDeleted && friend.phone === phone,
+    );
   }
 
-  removeFriend(name: string): boolean | { error: string } {
-    const friendIndex = this.friends.findIndex((f) => f.name.toLowerCase() === name.toLowerCase());
-    if (friendIndex === -1) {
-      return { error: "Friend not found" };
-    }
+  findFriendByName(name: string) {
+    return this.friends.find(
+      (friend) =>
+        !friend.isDeleted && friend.name.toLowerCase() === name.toLowerCase(),
+    );
+  }
 
+  findFriendById(id: string) {
+    return this.friends.find((friend) => !friend.isDeleted && friend.id === id);
+  }
+
+  updateFriendById(
+    id: string,
+    update: Partial<iFriend>,
+  ): iFriend | { error: string } {
+    const friend = this.findFriendById(id);
+    if (!friend) return { error: "Friend not found" };
+    Object.assign(friend, update);
+    AppDBManager.getInstance().save();
+    return friend;
+  }
+
+  removeFriendById(id: string): boolean | { error: string } {
+    const friendIndex = this.friends.findIndex((f) => f.id === id);
+    if (friendIndex === -1) return { error: "Friend not found" };
     const friend = this.friends[friendIndex]!;
-    
-    if (Math.abs(friend.balance) > 0) {
-      friend.isDeleted = true;
-      console.log(`Soft deleted friend ${friend.name} due to pending payments: ${friend.balance}`);
-    } else {
-      this.friends.splice(friendIndex, 1);
-      console.log(`Hard deleted friend ${friend.name} as balance is 0`);
-    }
+    if (Math.abs(friend?.balance) > 0) friend.isDeleted = true;
+    else this.friends.splice(friendIndex, 1);
+    AppDBManager.getInstance().save();
     return true;
   }
 

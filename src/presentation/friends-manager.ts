@@ -2,9 +2,10 @@ import { numberValidator } from "../core/validators/number.validator.js";
 import { nameValidator } from "../core/validators/name.validator.js";
 import { phoneValidator } from "../core/validators/phone.validator.js";
 import { emailValidator } from "../core/validators/email.validator.js";
+import { yesOrNo } from "../core/validators/yesOrNo.validator.js";
 import { openInteractionManager, type Choice } from "./interaction-manager.js";
-import { FriendsController } from "../controllers/firends.controller.js";
-
+import { FriendsController } from "../controllers/friends.controller.js";
+import { displayTable } from "../core/display-table.js";
 
 const controller = new FriendsController();
 
@@ -18,65 +19,247 @@ const options: Choice[] = [
 
 const { ask, choose, close } = openInteractionManager();
 
+const optionalValidator =
+  (validatorFn: (input: string) => boolean) => (input: string) =>
+    !input.trim() || validatorFn(input);
+
 const addFriend = async () => {
-  const name = await ask("Enter freind name:", { validator: nameValidator });
-  const email = await ask("Enter friend email", { validator: emailValidator });
-  const phone = await ask("Enter friend phone number", { validator: phoneValidator });
+  let name = await ask("Enter friend's name: ", { validator: nameValidator });
+  let email = await ask("Enter friend's email (optional): ", {
+    validator: optionalValidator(emailValidator),
+  });
+  let phone = await ask("Enter friend's phone number (optional): ", {
+    validator: optionalValidator(phoneValidator),
+  });
   const openingBalance = await ask(
-    "Enter opening balance (positive mean they owe you,negative means you owe them)",
-    { validator: numberValidator },
+    "Enter opening balance (+ve means they owe you, -ve means you owe them): ",
+    { validator: numberValidator, defaultAnswer: "0" },
   );
 
   if (!name) {
-    console.log("Name is required.");
+    console.log("Error: Name is mandatory");
     return;
   }
 
-  const friend = {
-    id: Date.now().toString(),
-    name: name,
-    balance: Number(openingBalance) || 0,
-    ...(email ? { email } : {}),
-    ...(phone ? { phone } : {}),
-  };
+  while (true) {
+    const friendData = {
+      id: Date.now().toString(),
+      name: name as string,
+      balance: Number(openingBalance) || 0,
+      ...(email ? { email } : {}),
+      ...(phone ? { phone } : {}),
+    };
 
-  const result = controller.addFriend(friend);
-  if (result.success) {
-    console.log("Friend added successfully!");
-  } else {
-    console.log("Failed to add friend.");
+    try {
+      controller.addFriend(friendData);
+      console.log("Friend added successfully!");
+      return;
+    } catch (err: unknown) {
+      const error = err as Error & { conflictProperty?: string };
+      if (error.name === "ConflictError") {
+        console.log(`Conflict: ${error.message}`);
+        if (error.conflictProperty === "email") {
+          email = await ask("Enter a different email: ", {
+            validator: optionalValidator(emailValidator),
+          });
+        } else if (error.conflictProperty === "phone") {
+          phone = await ask("Enter a different phone number: ", {
+            validator: optionalValidator(phoneValidator),
+          });
+        } else if (error.conflictProperty === "name") {
+          name = await ask("Enter a different name: ", {
+            validator: nameValidator,
+          });
+        }
+      } else {
+        console.log(
+          `Failed to add friend: ${error.message || "Unknown error"}`,
+        );
+        return;
+      }
+    }
   }
 };
 
 const searchFriend = async () => {
-  const query = await ask("Enter search query (name, email, or phone):");
-  if (!query) {
-    console.log("Query cannot be empty.");
+  const query =
+    (await ask(
+      "Enter search keyword (name, email, or phone) [Leave empty for all friends]: ",
+    )) || "";
+
+  if (!query.trim()) {
+    const list = controller.allFriends();
+    if (!list || list.length === 0) {
+      console.log("You have no friends recorded.");
+    } else {
+      console.log(`\nDisplaying all ${list.length} friend(s):`);
+      displayTable(list);
+    }
     return;
   }
-  
+
   const result = controller.searchFriends(query);
+
   if (result.success && result.data && result.data.length > 0) {
     console.log(`\nFound ${result.matched} friend(s):`);
-    result.data.forEach((f) => {
-      console.log(`- ${f.name} (ID: ${f.id}, Email: ${f.email || 'N/A'}, Phone: ${f.phone || 'N/A'}, Balance: ${f.balance})`);
-    });
-    console.log();
+    displayTable(result.data);
   } else {
-    console.log("No friends found.");
+    console.log("No friends matched your search criteria.");
+  }
+};
+
+const updateFriend = async () => {
+  const targetQuery =
+    (await ask(
+      "Enter the name, email, or phone of the friend you wish to update (Leave empty to list all): ",
+    )) || "";
+
+  let matchingFriends;
+
+  // Handle empty input by fetching all friends
+  if (!targetQuery.trim()) {
+    matchingFriends = controller.allFriends();
+  } else {
+    const searchResult = controller.searchFriends(targetQuery as string);
+    matchingFriends = searchResult.data;
+  }
+
+  if (!matchingFriends || matchingFriends.length === 0) {
+    console.log("Sorry, no friends matched that criteria.");
+    return;
+  }
+
+  let selectedFriend;
+
+  if (matchingFriends.length === 1) {
+    selectedFriend = matchingFriends[0]!;
+  } else {
+    console.log(
+      `\nFound ${matchingFriends.length} friends. Please select one:`,
+    );
+    displayTable(matchingFriends);
+
+    const indexStr = await ask(
+      "Enter the (index) number of the friend to update: ",
+      {
+        validator: numberValidator,
+      },
+    );
+
+    const selectedIdx = Number(indexStr);
+
+    if (selectedIdx < 0 || selectedIdx >= matchingFriends.length) {
+      console.log("Invalid selection. Cancelling update.");
+      return;
+    }
+    selectedFriend = matchingFriends[selectedIdx]!;
+  }
+
+  console.log(
+    `\nUpdating details for ${selectedFriend.name}. Press Enter to keep current values.`,
+  );
+
+  let email = await ask(
+    `New Email (current: ${selectedFriend.email || "None"}): `,
+    {
+      validator: optionalValidator(emailValidator),
+      defaultAnswer: selectedFriend.email || "",
+    },
+  );
+
+  let phone = await ask(
+    `New Phone (current: ${selectedFriend.phone || "None"}): `,
+    {
+      validator: optionalValidator(phoneValidator),
+      defaultAnswer: selectedFriend.phone || "",
+    },
+  );
+
+  const overrides: { email?: string; phone?: string } = {
+    ...(email ? { email: email as string } : {}),
+    ...(phone ? { phone: phone as string } : {}),
+  };
+
+  try {
+    const response = controller.updateFriend(selectedFriend.id, overrides);
+    if (response.success) {
+      console.log("\nFriend updated successfully!");
+      const updatedFriend = controller.findFriendById(selectedFriend.id);
+      if (updatedFriend) {
+        displayTable([updatedFriend]);
+      }
+    } else {
+      console.log(`Cannot update friend: ${response.error}`);
+    }
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.log(`Failed to update friend due to conflict: ${error.message}`);
   }
 };
 
 const removeFriend = async () => {
-  const name = await ask("Enter the name of the friend to remove:");
-  if (!name) {
-    console.log("Name cannot be empty.");
+  const targetQuery =
+    (await ask(
+      "Enter the name, email, or phone of the friend to remove (Leave empty to list all): ",
+    )) || "";
+
+  let matchingFriends;
+
+  // Handle empty input by fetching all friends
+  if (!targetQuery.trim()) {
+    matchingFriends = controller.allFriends();
+  } else {
+    const searchResult = controller.searchFriends(targetQuery as string);
+    matchingFriends = searchResult.data;
+  }
+
+  if (!matchingFriends || matchingFriends.length === 0) {
+    console.log("Sorry, no friends matched that criteria.");
     return;
   }
-  
-  const result = controller.removeFriend(name);
+
+  let selectedFriend;
+
+  if (matchingFriends.length === 1) {
+    selectedFriend = matchingFriends[0]!;
+  } else {
+    console.log(
+      `\nFound ${matchingFriends.length} friends. Please select one:`,
+    );
+    displayTable(matchingFriends);
+
+    const indexStr = await ask(
+      "Enter the (index) number of the friend to remove: ",
+      {
+        validator: numberValidator,
+      },
+    );
+
+    const selectedIdx = Number(indexStr);
+
+    if (selectedIdx < 0 || selectedIdx >= matchingFriends.length) {
+      console.log("Invalid selection. Cancelling removal.");
+      return;
+    }
+    selectedFriend = matchingFriends[selectedIdx]!;
+  }
+  const confirmStr =
+    (await ask(
+      `Do you want to delete ${selectedFriend.name}'s account Yes(y)/No(n) ? `,
+      {
+        validator: optionalValidator(yesOrNo),
+        defaultAnswer: "no",
+      },
+    )) || "";
+
+  if (!confirmStr.trim().toLowerCase().startsWith("y")) {
+    console.log("Operation cancelled.");
+    return;
+  }
+
+  const result = controller.removeFriend(selectedFriend.id);
   if (result.success) {
-    console.log("Friend removed successfully!");
+    console.log(`${selectedFriend.name}'s account removed successfully.`);
   } else {
     console.log(`Failed to remove friend: ${result.error}`);
   }
@@ -84,11 +267,14 @@ const removeFriend = async () => {
 
 export const manageFriends = async () => {
   while (true) {
-    const choice = await choose("What do you want to do?", options, false);
-    
-    if (!choice) continue;
+    const userChoice = await choose(
+      "What would you like to do? ",
+      options,
+      false,
+    );
+    if (!userChoice) continue;
 
-    switch (choice.value) {
+    switch (userChoice.value) {
       case "1":
         await addFriend();
         break;
@@ -96,13 +282,13 @@ export const manageFriends = async () => {
         await searchFriend();
         break;
       case "3":
-        console.log("Updating friend...");
+        await updateFriend();
         break;
       case "4":
         await removeFriend();
         break;
       case "5":
-        console.log("Exiting...");
+        console.log("Exiting Connection Manager...");
         close();
         return;
     }
