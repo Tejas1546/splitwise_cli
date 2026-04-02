@@ -19,22 +19,18 @@ const options: Choice[] = [
 const { ask, choose, close } = openInteractionManager();
 
 const addFriend = async () => {
-  const name = await ask("Enter freind name:", { validator: nameValidator });
-  const email = await ask("Enter friend email", { validator: emailValidator });
-  const phone = await ask("Enter friend phone number", { validator: phoneValidator });
+  const name = await ask("enter freind name: ", { validator: nameValidator });
+  const email = await ask("enter friend email ", { validator: emailValidator });
+  const phone = await ask("enter friend phone number ", { validator: phoneValidator });
   const openingBalance = await ask(
-    "Enter opening balance (positive mean they owe you,negative means you owe them)",
+    "enter opening balance (+ve mean they owe you,-ve means you owe them)",
     { validator: numberValidator },
   );
 
-  if (!name) {
-    console.log("Name is required.");
-    return;
-  }
 
   const friend = {
     id: Date.now().toString(),
-    name: name,
+    name: name!,
     balance: Number(openingBalance) || 0,
     ...(email ? { email } : {}),
     ...(phone ? { phone } : {}),
@@ -44,7 +40,7 @@ const addFriend = async () => {
   if (result.success) {
     console.log("Friend added successfully!");
   } else {
-    console.log("Failed to add friend.");
+    console.log(`Failed to add friend: ${'error' in result ? result.error : 'Unknown error'}`);
   }
 };
 
