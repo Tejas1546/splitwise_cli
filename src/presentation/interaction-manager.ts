@@ -25,9 +25,15 @@ export const openInteractionManager = () => {
       rl.question(
         question + `${defaultAnswer ? "(" + defaultAnswer + ")" : ""}`,
         (answer: string) => {
+          // Empty input + default = keep default, no validation needed
+          if (answer === "" && defaultAnswer !== undefined && defaultAnswer !== "") {
+            resolve(defaultAnswer);
+            return;
+          }
           if (validator && !validator(answer)) {
             console.log("Invalid");
             resolve(ask(question, { defaultAnswer, validator }));
+            return;
           }
           resolve(answer || defaultAnswer);
         },
@@ -47,7 +53,7 @@ export const openInteractionManager = () => {
     choices.forEach((choice) => {
       console.log(`${choice.value}. ${choice.label}`);
     });
-    const choice = await ask("Please your choice", {
+    const choice = await ask("Please your choice: ", {
       validator: (input) => {
         if (optional && input.trim() === "") {
           return true;

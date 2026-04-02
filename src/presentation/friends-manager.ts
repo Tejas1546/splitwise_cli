@@ -5,7 +5,6 @@ import { emailValidator } from "../core/validators/email.validator.js";
 import { openInteractionManager, type Choice } from "./interaction-manager.js";
 import { FriendsController } from "../controllers/firends.controller.js";
 
-
 const controller = new FriendsController();
 
 const options: Choice[] = [
@@ -21,12 +20,13 @@ const { ask, choose, close } = openInteractionManager();
 const addFriend = async () => {
   const name = await ask("enter freind name: ", { validator: nameValidator });
   const email = await ask("enter friend email ", { validator: emailValidator });
-  const phone = await ask("enter friend phone number ", { validator: phoneValidator });
+  const phone = await ask("enter friend phone number ", {
+    validator: phoneValidator,
+  });
   const openingBalance = await ask(
     "enter opening balance (+ve mean they owe you,-ve means you owe them)",
     { validator: numberValidator },
   );
-
 
   const friend = {
     id: Date.now().toString(),
@@ -36,26 +36,25 @@ const addFriend = async () => {
     ...(phone ? { phone } : {}),
   };
 
-  const result = controller.addFriend(friend);
-  if (result.success) {
+  try {
+    controller.addFriend(friend);
     console.log("Friend added successfully!");
-  } else {
-    console.log(`Failed to add friend: ${'error' in result ? result.error : 'Unknown error'}`);
+  } catch (error: any) {
+    console.log(`Failed to add friend: ${error.message || "Unknown error"}`);
   }
 };
 
+
 const searchFriend = async () => {
-  const query = await ask("Enter search query (name, email, or phone):");
-  if (!query) {
-    console.log("Query cannot be empty.");
-    return;
-  }
-  
+  const query = await ask("Enter search query (name, email, or phone): ") || "";
+
   const result = controller.searchFriends(query);
   if (result.success && result.data && result.data.length > 0) {
     console.log(`\nFound ${result.matched} friend(s):`);
     result.data.forEach((f) => {
-      console.log(`- ${f.name} (ID: ${f.id}, Email: ${f.email || 'N/A'}, Phone: ${f.phone || 'N/A'}, Balance: ${f.balance})`);
+      console.log(
+        `- ${f.name} (ID: ${f.id}, Email: ${f.email || "N/A"}, Phone: ${f.phone || "N/A"}, Balance: ${f.balance})`,
+      );
     });
     console.log();
   } else {
@@ -63,13 +62,83 @@ const searchFriend = async () => {
   }
 };
 
-const removeFriend = async () => {
-  const name = await ask("Enter the name of the friend to remove:");
+const updateFriend = async () => {
+  const name = await ask("Enter the name of the friend to update: ");
   if (!name) {
     console.log("Name cannot be empty.");
     return;
   }
-  
+
+  const existing = controller.findFriendByName(name);
+  if (!existing) {
+    console.log("Friend not found.");
+    return;
+  }
+
+  console.log(`\nUpdating "${existing.name}" — press Enter to keep existing value.\n`);
+
+  const newName = await ask("Name: ", {
+    defaultAnswer: existing.name,
+    validator: nameValidator,
+  });
+
+  let newEmail = await ask("Email: ", {
+    defaultAnswer: existing.email || "",
+    validator: emailValidator,
+  });
+
+  let newPhone = await ask("Phone: ", {
+    defaultAnswer: existing.phone || "",
+    validator: phoneValidator,
+  });
+
+  while (true) {
+    const updates = {
+      name: newName || existing.name,
+      ...(newEmail ? { email: newEmail } : {}),
+      ...(newPhone ? { phone: newPhone } : {}),
+    };
+
+    try {
+      const result = controller.updateFriend(existing.name, updates);
+      if (result.success) {
+        console.log("Friend updated successfully!");
+      } else {
+        console.log(`Failed to update friend: ${result.error}`);
+      }
+      break;
+    } catch (error: any) {
+      if (error.name === "ConflictError") {
+        console.log(`${error.message}.`);
+        if (error.conflictProperty === "email") {
+          newEmail = await ask("Email: ", {
+            defaultAnswer: existing.email || "",
+            validator: emailValidator,
+          });
+        } else if (error.conflictProperty === "phone") {
+          newPhone = await ask("Phone: ", {
+            defaultAnswer: existing.phone || "",
+            validator: phoneValidator,
+          });
+        } else {
+          break;
+        }
+      } else {
+        console.log(`Failed to update friend: ${error.message || "Unknown error"}`);
+        break;
+      }
+    }
+  }
+};
+
+
+const removeFriend = async () => {
+  const name = await ask("Enter the name of the friend to remove: ");
+  if (!name) {
+    console.log("Name cannot be empty. ");
+    return;
+  }
+
   const result = controller.removeFriend(name);
   if (result.success) {
     console.log("Friend removed successfully!");
@@ -80,8 +149,8 @@ const removeFriend = async () => {
 
 export const manageFriends = async () => {
   while (true) {
-    const choice = await choose("What do you want to do?", options, false);
-    
+    const choice = await choose("What do you want to do? ", options, false);
+
     if (!choice) continue;
 
     switch (choice.value) {
@@ -92,7 +161,7 @@ export const manageFriends = async () => {
         await searchFriend();
         break;
       case "3":
-        console.log("Updating friend...");
+        await updateFriend();
         break;
       case "4":
         await removeFriend();

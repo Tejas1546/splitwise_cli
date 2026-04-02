@@ -18,24 +18,49 @@ export class FriendRepository {
   }
 
   findFriendByEmail(email: string) {
-    return this.friends.find((friend) => !friend.isDeleted && friend.email === email);
+    return this.friends.find(
+      (friend) => !friend.isDeleted && friend.email === email,
+    );
   }
 
   findFriendByPhone(phone: string) {
-    return this.friends.find((friend) => !friend.isDeleted && friend.phone === phone);
+    return this.friends.find(
+      (friend) => !friend.isDeleted && friend.phone === phone,
+    );
+  }
+
+  findFriendByName(name: string) {
+    return this.friends.find(
+      (friend) => !friend.isDeleted && friend.name.toLowerCase() === name.toLowerCase(),
+    );
+  }
+
+  updateFriend(name: string, updates: Partial<iFriend>): iFriend | { error: string } {
+    const friend = this.friends.find(
+      (f) => !f.isDeleted && f.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (!friend) {
+      return { error: "Friend not found" };
+    }
+    Object.assign(friend, updates);
+    return friend;
   }
 
   removeFriend(name: string): boolean | { error: string } {
-    const friendIndex = this.friends.findIndex((f) => f.name.toLowerCase() === name.toLowerCase());
+    const friendIndex = this.friends.findIndex(
+      (f) => f.name.toLowerCase() === name.toLowerCase(),
+    );
     if (friendIndex === -1) {
       return { error: "Friend not found" };
     }
 
     const friend = this.friends[friendIndex]!;
-    
+
     if (Math.abs(friend.balance) > 0) {
       friend.isDeleted = true;
-      console.log(`Soft deleted friend ${friend.name} due to pending payments: ${friend.balance}`);
+      console.log(
+        `Soft deleted friend ${friend.name} due to pending payments: ${friend.balance}`,
+      );
     } else {
       this.friends.splice(friendIndex, 1);
       console.log(`Hard deleted friend ${friend.name} as balance is 0`);
