@@ -1,9 +1,11 @@
 import type { PageOptions, PageResult } from "../core/page-options.js";
 import type { iFriend } from "../models/friend.model.js";
+import { getFriendsFromFile, storeFriendsInFile } from "../core/friends.storage.js";
 
 export class FriendRepository {
   private static instance: FriendRepository;
   private friends: iFriend[] = [];
+  
   static getInstance() {
     if (!FriendRepository.instance) {
       FriendRepository.instance = new FriendRepository();
@@ -11,10 +13,18 @@ export class FriendRepository {
     return FriendRepository.instance;
   }
 
-  private constructor() {}
+  private constructor() {
+    // Populate the array with saved data on initialization
+    this.friends = getFriendsFromFile<iFriend>();
+  }
+
+  get getAllFriends() {
+    return this.friends.filter(f => !f.isDeleted);
+  }
+
   addFriend(friend: iFriend) {
     this.friends.push(friend);
-    console.log("Friend added to repository:", friend);
+    storeFriendsInFile(this.friends);
   }
 
   findFriendByEmail(email: string) {
@@ -43,6 +53,7 @@ export class FriendRepository {
       return { error: "Friend not found" };
     }
     Object.assign(friend, updates);
+    storeFriendsInFile(this.friends);
     return friend;
   }
 
@@ -58,13 +69,11 @@ export class FriendRepository {
 
     if (Math.abs(friend.balance) > 0) {
       friend.isDeleted = true;
-      console.log(
-        `Soft deleted friend ${friend.name} due to pending payments: ${friend.balance}`,
-      );
     } else {
       this.friends.splice(friendIndex, 1);
-      console.log(`Hard deleted friend ${friend.name} as balance is 0`);
     }
+    
+    storeFriendsInFile(this.friends);
     return true;
   }
 

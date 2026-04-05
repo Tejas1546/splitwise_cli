@@ -65,4 +65,8 @@ export class FriendsController {
 
     return { success: true };
   }
+
+  allFriends() {
+    return FriendRepository.getInstance().getAllFriends;
+  }
 }
