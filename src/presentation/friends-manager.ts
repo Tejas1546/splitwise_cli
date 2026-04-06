@@ -1,20 +1,20 @@
-import { numberValidator } from "../core/validators/number.validator.js";
-import { nameValidator } from "../core/validators/name.validator.js";
-import { phoneValidator } from "../core/validators/phone.validator.js";
-import { emailValidator } from "../core/validators/email.validator.js";
-import { yesOrNo } from "../core/validators/yesOrNo.validator.js";
-import { openInteractionManager, type Choice } from "./interaction-manager.js";
-import { FriendsController } from "../controllers/friends.controller.js";
-import { displayTable } from "../core/display-table.js";
+import { numberValidator } from '../core/validators/number.validator.js';
+import { nameValidator } from '../core/validators/name.validator.js';
+import { phoneValidator } from '../core/validators/phone.validator.js';
+import { emailValidator } from '../core/validators/email.validator.js';
+import { yesOrNo } from '../core/validators/yesOrNo.validator.js';
+import { openInteractionManager, type Choice } from './interaction-manager.js';
+import { FriendsController } from '../controllers/friends.controller.js';
+import { displayTable } from '../core/display-table.js';
 
 const controller = new FriendsController();
 
 const options: Choice[] = [
-  { label: "Add Friend", value: "1" },
-  { label: "Search Friend", value: "2" },
-  { label: "Update Friend", value: "3" },
-  { label: "Remove Friend", value: "4" },
-  { label: "Exit", value: "5" },
+  { label: 'Add Friend', value: '1' },
+  { label: 'Search Friend', value: '2' },
+  { label: 'Update Friend', value: '3' },
+  { label: 'Remove Friend', value: '4' },
+  { label: 'Exit', value: '5' },
 ];
 
 const { ask, choose, close } = openInteractionManager();
@@ -32,12 +32,12 @@ const addFriend = async () => {
     validator: optionalValidator(phoneValidator),
   });
   const openingBalance = await ask(
-    "Enter opening balance (+ve means they owe you, -ve means you owe them): ",
-    { validator: numberValidator, defaultAnswer: "0" },
+    'Enter opening balance (+ve means they owe you, -ve means you owe them): ',
+    { validator: numberValidator, defaultAnswer: '0' },
   );
 
   if (!name) {
-    console.log("Error: Name is mandatory");
+    console.log('Error: Name is mandatory');
     return;
   }
 
@@ -52,28 +52,28 @@ const addFriend = async () => {
 
     try {
       controller.addFriend(friendData);
-      console.log("Friend added successfully!");
+      console.log('Friend added successfully!');
       return;
     } catch (err: unknown) {
       const error = err as Error & { conflictProperty?: string };
-      if (error.name === "ConflictError") {
+      if (error.name === 'ConflictError') {
         console.log(`Conflict: ${error.message}`);
-        if (error.conflictProperty === "email") {
-          email = await ask("Enter a different email: ", {
+        if (error.conflictProperty === 'email') {
+          email = await ask('Enter a different email: ', {
             validator: optionalValidator(emailValidator),
           });
-        } else if (error.conflictProperty === "phone") {
-          phone = await ask("Enter a different phone number: ", {
+        } else if (error.conflictProperty === 'phone') {
+          phone = await ask('Enter a different phone number: ', {
             validator: optionalValidator(phoneValidator),
           });
-        } else if (error.conflictProperty === "name") {
-          name = await ask("Enter a different name: ", {
+        } else if (error.conflictProperty === 'name') {
+          name = await ask('Enter a different name: ', {
             validator: nameValidator,
           });
         }
       } else {
         console.log(
-          `Failed to add friend: ${error.message || "Unknown error"}`,
+          `Failed to add friend: ${error.message || 'Unknown error'}`,
         );
         return;
       }
@@ -84,13 +84,13 @@ const addFriend = async () => {
 const searchFriend = async () => {
   const query =
     (await ask(
-      "Enter search keyword (name, email, or phone) [Leave empty for all friends]: ",
-    )) || "";
+      'Enter search keyword (name, email, or phone) [Leave empty for all friends]: ',
+    )) || '';
 
   if (!query.trim()) {
     const list = controller.allFriends();
     if (!list || list.length === 0) {
-      console.log("You have no friends recorded.");
+      console.log('You have no friends recorded.');
     } else {
       console.log(`\nDisplaying all ${list.length} friend(s):`);
       displayTable(list);
@@ -104,15 +104,15 @@ const searchFriend = async () => {
     console.log(`\nFound ${result.matched} friend(s):`);
     displayTable(result.data);
   } else {
-    console.log("No friends matched your search criteria.");
+    console.log('No friends matched your search criteria.');
   }
 };
 
 const updateFriend = async () => {
   const targetQuery =
     (await ask(
-      "Enter the name, email, or phone of the friend you wish to update (Leave empty to list all): ",
-    )) || "";
+      'Enter the name, email, or phone of the friend you wish to update (Leave empty to list all): ',
+    )) || '';
 
   let matchingFriends;
 
@@ -125,7 +125,7 @@ const updateFriend = async () => {
   }
 
   if (!matchingFriends || matchingFriends.length === 0) {
-    console.log("Sorry, no friends matched that criteria.");
+    console.log('Sorry, no friends matched that criteria.');
     return;
   }
 
@@ -140,7 +140,7 @@ const updateFriend = async () => {
     displayTable(matchingFriends);
 
     const indexStr = await ask(
-      "Enter the (index) number of the friend to update: ",
+      'Enter the (index) number of the friend to update: ',
       {
         validator: numberValidator,
       },
@@ -149,7 +149,7 @@ const updateFriend = async () => {
     const selectedIdx = Number(indexStr);
 
     if (selectedIdx < 0 || selectedIdx >= matchingFriends.length) {
-      console.log("Invalid selection. Cancelling update.");
+      console.log('Invalid selection. Cancelling update.');
       return;
     }
     selectedFriend = matchingFriends[selectedIdx]!;
@@ -159,19 +159,19 @@ const updateFriend = async () => {
     `\nUpdating details for ${selectedFriend.name}. Press Enter to keep current values.`,
   );
 
-  let email = await ask(
-    `New Email (current: ${selectedFriend.email || "None"}): `,
+  const email = await ask(
+    `New Email (current: ${selectedFriend.email || 'None'}): `,
     {
       validator: optionalValidator(emailValidator),
-      defaultAnswer: selectedFriend.email || "",
+      defaultAnswer: selectedFriend.email || '',
     },
   );
 
-  let phone = await ask(
-    `New Phone (current: ${selectedFriend.phone || "None"}): `,
+  const phone = await ask(
+    `New Phone (current: ${selectedFriend.phone || 'None'}): `,
     {
       validator: optionalValidator(phoneValidator),
-      defaultAnswer: selectedFriend.phone || "",
+      defaultAnswer: selectedFriend.phone || '',
     },
   );
 
@@ -183,7 +183,7 @@ const updateFriend = async () => {
   try {
     const response = controller.updateFriend(selectedFriend.id, overrides);
     if (response.success) {
-      console.log("\nFriend updated successfully!");
+      console.log('\nFriend updated successfully!');
       const updatedFriend = controller.findFriendById(selectedFriend.id);
       if (updatedFriend) {
         displayTable([updatedFriend]);
@@ -200,8 +200,8 @@ const updateFriend = async () => {
 const removeFriend = async () => {
   const targetQuery =
     (await ask(
-      "Enter the name, email, or phone of the friend to remove (Leave empty to list all): ",
-    )) || "";
+      'Enter the name, email, or phone of the friend to remove (Leave empty to list all): ',
+    )) || '';
 
   let matchingFriends;
 
@@ -214,7 +214,7 @@ const removeFriend = async () => {
   }
 
   if (!matchingFriends || matchingFriends.length === 0) {
-    console.log("Sorry, no friends matched that criteria.");
+    console.log('Sorry, no friends matched that criteria.');
     return;
   }
 
@@ -229,7 +229,7 @@ const removeFriend = async () => {
     displayTable(matchingFriends);
 
     const indexStr = await ask(
-      "Enter the (index) number of the friend to remove: ",
+      'Enter the (index) number of the friend to remove: ',
       {
         validator: numberValidator,
       },
@@ -238,7 +238,7 @@ const removeFriend = async () => {
     const selectedIdx = Number(indexStr);
 
     if (selectedIdx < 0 || selectedIdx >= matchingFriends.length) {
-      console.log("Invalid selection. Cancelling removal.");
+      console.log('Invalid selection. Cancelling removal.');
       return;
     }
     selectedFriend = matchingFriends[selectedIdx]!;
@@ -248,12 +248,12 @@ const removeFriend = async () => {
       `Do you want to delete ${selectedFriend.name}'s account Yes(y)/No(n) ? `,
       {
         validator: optionalValidator(yesOrNo),
-        defaultAnswer: "no",
+        defaultAnswer: 'no',
       },
-    )) || "";
+    )) || '';
 
-  if (!confirmStr.trim().toLowerCase().startsWith("y")) {
-    console.log("Operation cancelled.");
+  if (!confirmStr.trim().toLowerCase().startsWith('y')) {
+    console.log('Operation cancelled.');
     return;
   }
 
@@ -268,27 +268,27 @@ const removeFriend = async () => {
 export const manageFriends = async () => {
   while (true) {
     const userChoice = await choose(
-      "What would you like to do? ",
+      'What would you like to do? ',
       options,
       false,
     );
     if (!userChoice) continue;
 
     switch (userChoice.value) {
-      case "1":
+      case '1':
         await addFriend();
         break;
-      case "2":
+      case '2':
         await searchFriend();
         break;
-      case "3":
+      case '3':
         await updateFriend();
         break;
-      case "4":
+      case '4':
         await removeFriend();
         break;
-      case "5":
-        console.log("Exiting Connection Manager...");
+      case '5':
+        console.log('Exiting Connection Manager...');
         close();
         return;
     }
