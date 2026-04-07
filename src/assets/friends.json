@@ -1,1 +1,52 @@
-{"friends":[{"id":"1775457214857","name":"varun","balance":0,"email":"varun@gmail.com","phone":"7894561230"},{"id":"1775457237817","name":"tejas","balance":0,"email":"tejas@gmail.com","phone":"7410852963"},{"id":"1775457994359","name":"varun","balance":0,"email":"varun1@email.com","phone":"9871234560"},{"id":"1775459321507","name":"tejas","balance":0,"email":"tejas@ihi.com","phone":"9520741369"},{"id":"1775459385051","name":"shrijith","balance":0,"email":"she@hase.com","phone":"4861530297"},{"id":"1775470281494","name":"himansu","balance":0,"email":"himan@gam.com","phone":"7854963210"},{"id":"1775498191733","name":"Tejas","balance":0}]}
+{
+  "friends": [
+    {
+      "id": "1775457214857",
+      "name": "varun",
+      "balance": 0,
+      "email": "varun@gmail.com",
+      "phone": "7894561230"
+    },
+    {
+      "id": "1775457237817",
+      "name": "tejas",
+      "balance": 0,
+      "email": "tejas@gmail.com",
+      "phone": "7410852963"
+    },
+    {
+      "id": "1775457994359",
+      "name": "varun",
+      "balance": 0,
+      "email": "varun1@email.com",
+      "phone": "9871234560"
+    },
+    {
+      "id": "1775459385051",
+      "name": "shrijith",
+      "balance": 0,
+      "email": "she@hase.com",
+      "phone": "4861530297"
+    },
+    {
+      "id": "1775470281494",
+      "name": "himansu",
+      "balance": 0,
+      "email": "himan@gam.com",
+      "phone": "7854963210"
+    },
+    { "id": "1775540669115", "name": "megha", "balance": 0 },
+    {
+      "id": "1775540705424",
+      "name": "tejas",
+      "balance": 0,
+      "email": "tyui@asdf.co"
+    },
+    {
+      "id": "1775541420755",
+      "name": "gauth",
+      "balance": 800,
+      "isDeleted": true
+    }
+  ]
+}

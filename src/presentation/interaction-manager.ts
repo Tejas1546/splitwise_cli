@@ -1,5 +1,5 @@
-import * as readline from "node:readline";
-import { stdin as input, stdout as output } from "node:process";
+import * as readline from 'node:readline';
+import { stdin as input, stdout as output } from 'node:process';
 
 export interface AskOptions {
   defaultAnswer?: string | undefined;
@@ -11,6 +11,8 @@ export interface Choice {
   value: string;
 }
 
+const ESCAPE_CMD = 'q';
+
 export const openInteractionManager = () => {
   const rl = readline.createInterface({ input, output });
   const ask: (
@@ -21,17 +23,25 @@ export const openInteractionManager = () => {
     options?: AskOptions,
   ) => {
     const { defaultAnswer, validator } = options || {};
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       rl.question(
-        question + `${defaultAnswer ? "(" + defaultAnswer + ")" : ""}`,
+        question + `${defaultAnswer ? '(' + defaultAnswer + ') ' : ''}`,
         (answer: string) => {
+          if (answer.trim().toLowerCase() === ESCAPE_CMD) {
+            reject(new Error('CANCELLED_BY_USER'));
+            return;
+          }
           // Empty input + default = keep default, no validation needed
-          if (answer === "" && defaultAnswer !== undefined && defaultAnswer !== "") {
+          if (
+            answer === '' &&
+            defaultAnswer !== undefined &&
+            defaultAnswer !== ''
+          ) {
             resolve(defaultAnswer);
             return;
           }
           if (validator && !validator(answer)) {
-            console.log("Invalid");
+            console.log('Invalid');
             resolve(ask(question, { defaultAnswer, validator }));
             return;
           }
@@ -53,9 +63,9 @@ export const openInteractionManager = () => {
     choices.forEach((choice) => {
       console.log(`${choice.value}. ${choice.label}`);
     });
-    const choice = await ask("Please your choice: ", {
+    const choice = await ask('Please your choice: ', {
       validator: (input) => {
-        if (optional && input.trim() === "") {
+        if (optional && input.trim() === '') {
           return true;
         }
         return choices.some((choice) => choice.value === input);
@@ -73,4 +83,3 @@ export const openInteractionManager = () => {
     close,
   };
 };
-

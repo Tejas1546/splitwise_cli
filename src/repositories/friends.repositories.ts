@@ -1,7 +1,7 @@
-import type { PageOptions, PageResult } from "../core/page-options.js";
-import type { iFriend } from "../models/friend.model.js";
+import type { PageOptions, PageResult } from '../core/page-options.js';
+import type { iFriend } from '../models/friend.model.js';
 
-import { AppDBManager } from "../models/db-manager.js";
+import { AppDBManager } from '../models/db-manager.js';
 
 export class FriendRepository {
   private static instance: FriendRepository;
@@ -17,7 +17,7 @@ export class FriendRepository {
   private constructor() {
     this.friends = AppDBManager.getInstance()
       .getDB()
-      .table("friends") as iFriend[];
+      .table('friends') as iFriend[];
   }
 
   get getAllFriends() {
@@ -57,7 +57,7 @@ export class FriendRepository {
     update: Partial<iFriend>,
   ): iFriend | { error: string } {
     const friend = this.findFriendById(id);
-    if (!friend) return { error: "Friend not found" };
+    if (!friend) return { error: 'Friend not found' };
     Object.assign(friend, update);
     AppDBManager.getInstance().save();
     return friend;
@@ -65,7 +65,7 @@ export class FriendRepository {
 
   removeFriendById(id: string): boolean | { error: string } {
     const friendIndex = this.friends.findIndex((f) => f.id === id);
-    if (friendIndex === -1) return { error: "Friend not found" };
+    if (friendIndex === -1) return { error: 'Friend not found' };
     const friend = this.friends[friendIndex]!;
     if (Math.abs(friend?.balance) > 0) friend.isDeleted = true;
     else this.friends.splice(friendIndex, 1);
