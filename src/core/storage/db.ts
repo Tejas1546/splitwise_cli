@@ -1,10 +1,9 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export type ColumnData = string | number | boolean | null | undefined;
 export type Row = Record<string, ColumnData>;
-export type Table = Row[]
-
+export type Table = Row[];
 
 export interface DatabaseStorageAdapter<T> {
   parse: (content: string) => T;
@@ -15,16 +14,16 @@ export class JsonAdapter<T> implements DatabaseStorageAdapter<T> {
   parse(content: string): T {
     try {
       return JSON.parse(content);
-    } catch(e) {
+    } catch (e) {
       console.error(
-        "Given filePath is not empty and its content is not valid JSON.",
+        'Given filePath is not empty and its content is not valid JSON.',
       );
       throw e;
     }
   }
 
   serialize(dataset: T): string {
-    return JSON.stringify(dataset)
+    return JSON.stringify(dataset, null, 2);
   }
 }
 
@@ -32,10 +31,10 @@ export class Database<T extends { [K in keyof T]: Table }> {
   private readonly dataStore: T = {} as T;
   constructor(
     private readonly filePath: string,
-    private readonly adapter: DatabaseStorageAdapter<T>
+    private readonly adapter: DatabaseStorageAdapter<T>,
   ) {
     if (!filePath) {
-      throw new Error("Missing file path argument.");
+      throw new Error('Missing file path argument.');
     }
     const dir = path.dirname(filePath);
     fs.mkdirSync(dir, { recursive: true });
@@ -44,13 +43,13 @@ export class Database<T extends { [K in keyof T]: Table }> {
     try {
       stats = fs.statSync(filePath);
     } catch (err: any) {
-      if (err.code === "ENOENT") {
+      if (err.code === 'ENOENT') {
         return;
-      } else if (err.code === "EACCES") {
+      } else if (err.code === 'EACCES') {
         throw new Error(`Cannot access path "${filePath}".`);
       } else {
         throw new Error(
-          `Error while checking for existence of path "${filePath}": ${err},`
+          `Error while checking for existence of path "${filePath}": ${err},`,
         );
       }
     }
@@ -59,13 +58,13 @@ export class Database<T extends { [K in keyof T]: Table }> {
       fs.accessSync(filePath, fs.constants.R_OK | fs.constants.W_OK);
     } catch (err: any) {
       throw new Error(
-        `Cannot read & write on path "${filePath}". Check permissions!,`
+        `Cannot read & write on path "${filePath}". Check permissions!,`,
       );
     }
     if (stats.size > 0) {
       let data: string;
       try {
-        data = fs.readFileSync(filePath, { encoding: "utf-8" });
+        data = fs.readFileSync(filePath, { encoding: 'utf-8' });
       } catch (err) {
         throw err;
       }
@@ -87,7 +86,7 @@ export class Database<T extends { [K in keyof T]: Table }> {
         this.adapter.serialize(this.dataStore),
       );
     } catch (e) {
-      console.error("Failed to save data to the given filePath.");
+      console.error('Failed to save data to the given filePath.');
       throw e;
     }
   }

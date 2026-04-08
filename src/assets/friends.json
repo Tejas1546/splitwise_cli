@@ -1,1 +1,67 @@
-{"friends":[{"id":"1775457214857","name":"varun","balance":0,"email":"varun@gmail.com","phone":"7894561230"},{"id":"1775457237817","name":"tejas","balance":0,"email":"tejas@gmail.com","phone":"7410852963"},{"id":"1775457994359","name":"varun","balance":0,"email":"varun1@email.com","phone":"9871234560"},{"id":"1775459385051","name":"shrijith","balance":0,"email":"she@hase.com","phone":"4861530297"},{"id":"1775470281494","name":"himansu","balance":0,"email":"himan@gam.com","phone":"7854963210"},{"id":"1775540705424","name":"tejas","balance":0,"email":"tyui@asdf.co","phone":"1235647890"},{"id":"1775541420755","name":"gauth","balance":800,"isDeleted":true}]}
+{
+  "friends": [
+    {
+      "id": "1775457214857",
+      "name": "varun",
+      "balance": 0,
+      "email": "varun@gmail.com",
+      "phone": "7894561230"
+    },
+    {
+      "id": "1775457237817",
+      "name": "tejas",
+      "balance": 0,
+      "email": "tejas@gmail.com",
+      "phone": "7410852963"
+    },
+    {
+      "id": "1775457994359",
+      "name": "varun",
+      "balance": 0,
+      "email": "varun1@email.com",
+      "phone": "9871234560"
+    },
+    {
+      "id": "1775459385051",
+      "name": "shrijith",
+      "balance": 0,
+      "email": "she@hase.com",
+      "phone": "4861530297"
+    },
+    {
+      "id": "1775470281494",
+      "name": "himansu",
+      "balance": 0,
+      "email": "himan@gam.com",
+      "phone": "7854963210"
+    },
+    {
+      "id": "1775540705424",
+      "name": "tejas",
+      "balance": 0,
+      "email": "tyui@asdf.co",
+      "phone": "1235647890"
+    },
+    {
+      "id": "1775541420755",
+      "name": "gauth",
+      "balance": 800,
+      "isDeleted": true
+    },
+    {
+      "id": "1775624380395",
+      "name": "megha",
+      "balance": 800,
+      "email": "emgha@gmail.com",
+      "phone": "7845120369",
+      "isDeleted": true
+    },
+    {
+      "id": "1775629762762",
+      "name": "shrijith",
+      "balance": 700,
+      "email": "hiii@gmail.com",
+      "isDeleted": true
+    }
+  ]
+}

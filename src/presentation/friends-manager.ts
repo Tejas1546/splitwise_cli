@@ -226,7 +226,6 @@ const removeFriend = async () => {
 
   let matchingFriends;
 
-  // Handle empty input by fetching all friends
   if (!targetQuery.trim()) {
     matchingFriends = controller.allFriends();
   } else {
@@ -264,18 +263,21 @@ const removeFriend = async () => {
     }
     selectedFriend = matchingFriends[selectedIdx]!;
   }
-  const removeFriend = controller.findFriendById(selectedFriend.id);
-  if (removeFriend) {
-    displayTable([removeFriend]);
+  const friendToRemove = controller.findFriendById(selectedFriend.id);
+  if (friendToRemove) {
+    displayTable([friendToRemove]);
   }
+
+  const promptMessage =
+    selectedFriend.balance !== 0
+      ? `Are you really sure to delete ${selectedFriend.name}'s account with ${selectedFriend.balance} balance before settling? Yes(y)/No(n): `
+      : `Do you want to delete ${selectedFriend.name}'s account Yes(y)/No(n) ? `;
+
   const confirmStr =
-    (await ask(
-      `Do you want to delete ${selectedFriend.name}'s account Yes(y)/No(n) ? `,
-      {
-        validator: optionalValidator(yesOrNo),
-        defaultAnswer: 'no',
-      },
-    )) || '';
+    (await ask(promptMessage, {
+      validator: optionalValidator(yesOrNo),
+      defaultAnswer: 'no',
+    })) || '';
 
   if (!confirmStr.trim().toLowerCase().startsWith('y')) {
     console.log('Operation cancelled.');
@@ -284,7 +286,13 @@ const removeFriend = async () => {
 
   const result = controller.removeFriend(selectedFriend.id);
   if (result.success) {
-    console.log(`${selectedFriend.name}'s account removed successfully.`);
+    if (selectedFriend.balance !== 0) {
+      console.log(
+        `\n${selectedFriend.name}'s account archived due to ${selectedFriend.balance} balance.\n`,
+      );
+    } else {
+      console.log(`\n${selectedFriend.name}'s account removed successfully.\n`);
+    }
   } else {
     console.log(`Failed to remove friend: ${result.error}`);
   }
