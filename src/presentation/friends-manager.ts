@@ -145,16 +145,16 @@ const updateFriend = async () => {
     console.log(
       `\nFound ${matchingFriends.length} friends. Please select one:`,
     );
-    displayTable(matchingFriends);
+    displayTable(matchingFriends, 'Choice');
 
     const indexStr = await ask(
-      'Enter the (index) number of the friend to update: ',
+      'Enter the Choice number of the friend to update: ',
       {
         validator: numberValidator,
       },
     );
 
-    const selectedIdx = Number(indexStr);
+    const selectedIdx = Number(indexStr) - 1;
 
     if (selectedIdx < 0 || selectedIdx >= matchingFriends.length) {
       console.log('Invalid selection. Cancelling update.');
@@ -247,22 +247,26 @@ const removeFriend = async () => {
     console.log(
       `\nFound ${matchingFriends.length} friends. Please select one:`,
     );
-    displayTable(matchingFriends);
+    displayTable(matchingFriends, 'Choice');
 
     const indexStr = await ask(
-      'Enter the (index) number of the friend to remove: ',
+      'Enter the Choice number of the friend to remove: ',
       {
         validator: numberValidator,
       },
     );
 
-    const selectedIdx = Number(indexStr);
+    const selectedIdx = Number(indexStr) - 1;
 
     if (selectedIdx < 0 || selectedIdx >= matchingFriends.length) {
       console.log('Invalid selection. Cancelling removal.');
       return;
     }
     selectedFriend = matchingFriends[selectedIdx]!;
+  }
+  const removeFriend = controller.findFriendById(selectedFriend.id);
+  if (removeFriend) {
+    displayTable([removeFriend]);
   }
   const confirmStr =
     (await ask(
@@ -280,14 +284,6 @@ const removeFriend = async () => {
 
   const result = controller.removeFriend(selectedFriend.id);
   if (result.success) {
-    displayTable([
-      {
-        id: selectedFriend.id,
-        name: selectedFriend.name || 'N/A',
-        balance: selectedFriend.balance || 'N/A',
-        email: selectedFriend.email,
-      },
-    ]);
     console.log(`${selectedFriend.name}'s account removed successfully.`);
   } else {
     console.log(`Failed to remove friend: ${result.error}`);
@@ -296,7 +292,7 @@ const removeFriend = async () => {
 
 export const manageFriends = async () => {
   console.log(
-    "\nTip: You can type 'q' at any prompt to cancel and return to the main menu.\n",
+    "\nTip: You can type 'esc' at any prompt to cancel and return to the main menu.\n",
   );
 
   while (true) {

@@ -11,10 +11,9 @@ export interface Choice {
   value: string;
 }
 
-const ESCAPE_CMD = 'q';
-
 export const openInteractionManager = () => {
   const rl = readline.createInterface({ input, output });
+  readline.emitKeypressEvents(input);
   const ask: (
     question: string,
     options?: AskOptions,
@@ -24,13 +23,21 @@ export const openInteractionManager = () => {
   ) => {
     const { defaultAnswer, validator } = options || {};
     return new Promise((resolve, reject) => {
+      let isAborted = false;
+      const onkeypress = (_str: string, key: readline.Key) => {
+        if (key && key.name === 'escape') {
+          isAborted = true;
+          input.removeListener('keypress', onkeypress);
+          rl.write('\n');
+          reject(new Error('CANCELLED_BY_USER'));
+        }
+      };
+      input.on('keypress', onkeypress);
       rl.question(
         question + `${defaultAnswer ? '(' + defaultAnswer + ') ' : ''}`,
         (answer: string) => {
-          if (answer.trim().toLowerCase() === ESCAPE_CMD) {
-            reject(new Error('CANCELLED_BY_USER'));
-            return;
-          }
+          if (isAborted) return;
+          input.removeListener('keypress', onkeypress);
           // Empty input + default = keep default, no validation needed
           if (
             answer === '' &&
