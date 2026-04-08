@@ -145,9 +145,3 @@ vite.config.ts.timestamp-*
 
 *.tsbuildinfo
 src/assets/*
-eslint.config.js
-.prettierignore
-.prettierrc
-.husky
-.DS_Store
-Thumbs.db
