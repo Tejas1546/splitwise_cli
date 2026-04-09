@@ -28,16 +28,19 @@
     "@types/node": "^25.2.3",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.5",
     "eslint-define-config": "^2.1.0",
+    "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.4.0",
-    "prettier": "^3.8.1",
     "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
     "simple-git-hooks": "^2.13.1",
-    "vitest": "^4.0.18",
-    "typescript": "^5.0.0",
     "tsx": "^4.21.0",
-    "typescript-eslint": "^8.57.0"
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^4.0.18"
   },
-  "dependencies": {}
+  "dependencies": {
+    "dotenv": "^17.4.1",
+    "mysql2": "^3.21.0"
+  }
 }

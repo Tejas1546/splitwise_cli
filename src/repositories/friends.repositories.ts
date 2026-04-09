@@ -1,11 +1,10 @@
 import type { PageOptions, PageResult } from '../core/page-options.js';
 import type { iFriend } from '../models/friend.model.js';
-
-import { AppDBManager } from '../models/db-manager.js';
+import { SQLManager } from '../models/sql-manager.js';
 
 export class FriendRepository {
   private static instance: FriendRepository;
-  private friends: iFriend[] = [];
+  private sqlManager: SQLManager;
 
   static getInstance() {
     if (!FriendRepository.instance) {
@@ -15,80 +14,66 @@ export class FriendRepository {
   }
 
   private constructor() {
-    this.friends = AppDBManager.getInstance()
-      .getDB()
-      .table('friends') as iFriend[];
+    this.sqlManager = SQLManager.getInstance();
   }
 
-  get getAllFriends() {
-    return this.friends.filter((f) => !f.isDeleted);
+  async getAllFriends(): Promise<iFriend[]> {
+    return this.sqlManager.getAllFriends();
   }
 
-  addFriend(friend: iFriend) {
-    this.friends.push(friend);
-    AppDBManager.getInstance().save();
+  async addFriend(friend: iFriend): Promise<void> {
+    await this.sqlManager.insertFriend(friend);
   }
 
-  findFriendByEmail(email: string) {
-    return this.friends.find(
-      (friend) => !friend.isDeleted && friend.email === email,
-    );
+  async findFriendByEmail(email: string): Promise<iFriend | undefined> {
+    return this.sqlManager.getFriendByEmail(email);
   }
 
-  findFriendByPhone(phone: string) {
-    return this.friends.find(
-      (friend) => !friend.isDeleted && friend.phone === phone,
-    );
+  async findFriendByPhone(phone: string): Promise<iFriend | undefined> {
+    return this.sqlManager.getFriendByPhone(phone);
   }
 
-  findFriendByName(name: string) {
-    return this.friends.find(
-      (friend) =>
-        !friend.isDeleted && friend.name.toLowerCase() === name.toLowerCase(),
-    );
+  async findFriendByName(name: string): Promise<iFriend | undefined> {
+    return this.sqlManager.getFriendByName(name);
   }
 
-  findFriendById(id: string) {
-    return this.friends.find((friend) => !friend.isDeleted && friend.id === id);
+  async findFriendById(id: string): Promise<iFriend | undefined> {
+    return this.sqlManager.getFriendById(id);
   }
 
-  updateFriendById(
+  async updateFriendById(
     id: string,
     update: Partial<iFriend>,
-  ): iFriend | { error: string } {
-    const friend = this.findFriendById(id);
+  ): Promise<iFriend | { error: string }> {
+    const friend = await this.sqlManager.getFriendById(id);
     if (!friend) return { error: 'Friend not found' };
+
+    // Apply updates
     Object.assign(friend, update);
-    AppDBManager.getInstance().save();
+    await this.sqlManager.updateFriend(friend);
+
     return friend;
   }
 
-  removeFriendById(id: string): boolean | { error: string } {
-    const friendIndex = this.friends.findIndex((f) => f.id === id);
-    if (friendIndex === -1) return { error: 'Friend not found' };
-    const friend = this.friends[friendIndex]!;
-    if (Math.abs(friend?.balance) > 0) friend.isDeleted = true;
-    else this.friends.splice(friendIndex, 1);
-    AppDBManager.getInstance().save();
+  async removeFriendById(id: string): Promise<boolean | { error: string }> {
+    const friend = await this.sqlManager.getFriendById(id);
+    if (!friend) return { error: 'Friend not found' };
+
+    if (Math.abs(friend.balance) > 0) {
+      await this.sqlManager.softDeleteFriend(id);
+    } else {
+      await this.sqlManager.hardDeleteFriend(id);
+    }
     return true;
   }
 
-  searchFriends(query: string, pageOptions?: PageOptions): PageResult<iFriend> {
-    const lowerQuery = query.toLowerCase();
-    const filtered = this.friends.filter(
-      (friend) =>
-        !friend.isDeleted &&
-        (friend.name.toLowerCase().includes(lowerQuery) ||
-          friend.email?.toLowerCase().includes(lowerQuery) ||
-          friend.phone?.toLowerCase().includes(lowerQuery)),
-    );
-    return {
-      data: filtered.slice(
-        pageOptions?.offset || 0,
-        (pageOptions?.offset || 0) + (pageOptions?.limit || 5),
-      ),
-      matched: filtered.length,
-      total: this.friends.length,
-    };
+  async searchFriends(
+    query: string,
+    pageOptions?: PageOptions,
+  ): Promise<PageResult<iFriend>> {
+    const limit = pageOptions?.limit || 5;
+    const offset = pageOptions?.offset || 0;
+
+    return this.sqlManager.searchFriends(query, limit, offset);
   }
 }

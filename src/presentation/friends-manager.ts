@@ -50,14 +50,14 @@ const addFriend = async () => {
       id: Date.now().toString(),
       name: name as string,
       balance: Number(openingBalance) || 0,
-      ...(email ? { email } : {}),
-      ...(phone ? { phone } : {}),
+      ...(email ? { email: email as string } : {}),
+      ...(phone ? { phone: phone as string } : {}),
     };
 
     try {
-      controller.addFriend(friendData);
+      await controller.addFriend(friendData);
       console.log('Friend added successfully!');
-      const updatedFriend = controller.findFriendById(friendData.id);
+      const updatedFriend = await controller.findFriendById(friendData.id);
       if (updatedFriend) {
         displayTable([updatedFriend]);
       }
@@ -96,7 +96,7 @@ const searchFriend = async () => {
     )) || '';
 
   if (!query.trim()) {
-    const list = controller.allFriends();
+    const list = await controller.allFriends();
     if (!list || list.length === 0) {
       console.log('You have no friends recorded.');
     } else {
@@ -106,7 +106,7 @@ const searchFriend = async () => {
     return;
   }
 
-  const result = controller.searchFriends(query);
+  const result = await controller.searchFriends(query);
 
   if (result.success && result.data && result.data.length > 0) {
     console.log(`\nFound ${result.matched} friend(s):`);
@@ -124,11 +124,10 @@ const updateFriend = async () => {
 
   let matchingFriends;
 
-  // Handle empty input by fetching all friends
   if (!targetQuery.trim()) {
-    matchingFriends = controller.allFriends();
+    matchingFriends = await controller.allFriends();
   } else {
-    const searchResult = controller.searchFriends(targetQuery as string);
+    const searchResult = await controller.searchFriends(targetQuery as string);
     matchingFriends = searchResult.data;
   }
 
@@ -202,10 +201,13 @@ const updateFriend = async () => {
   };
 
   try {
-    const response = controller.updateFriend(selectedFriend.id, overrides);
+    const response = await controller.updateFriend(
+      selectedFriend.id,
+      overrides,
+    );
     if (response.success) {
       console.log('\nFriend updated successfully!');
-      const updatedFriend = controller.findFriendById(selectedFriend.id);
+      const updatedFriend = await controller.findFriendById(selectedFriend.id);
       if (updatedFriend) {
         displayTable([updatedFriend]);
       }
@@ -227,9 +229,9 @@ const removeFriend = async () => {
   let matchingFriends;
 
   if (!targetQuery.trim()) {
-    matchingFriends = controller.allFriends();
+    matchingFriends = await controller.allFriends();
   } else {
-    const searchResult = controller.searchFriends(targetQuery as string);
+    const searchResult = await controller.searchFriends(targetQuery as string);
     matchingFriends = searchResult.data;
   }
 
@@ -263,7 +265,7 @@ const removeFriend = async () => {
     }
     selectedFriend = matchingFriends[selectedIdx]!;
   }
-  const friendToRemove = controller.findFriendById(selectedFriend.id);
+  const friendToRemove = await controller.findFriendById(selectedFriend.id);
   if (friendToRemove) {
     displayTable([friendToRemove]);
   }
@@ -284,7 +286,7 @@ const removeFriend = async () => {
     return;
   }
 
-  const result = controller.removeFriend(selectedFriend.id);
+  const result = await controller.removeFriend(selectedFriend.id);
   if (result.success) {
     if (selectedFriend.balance !== 0) {
       console.log(
@@ -328,6 +330,7 @@ export const manageFriends = async () => {
         case '5':
           console.log('Exiting Connection Manager...');
           close();
+          process.exit(0); // Kill DB pooled connections implicitly
           return;
       }
     } catch (error: unknown) {
